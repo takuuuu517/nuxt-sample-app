@@ -1,5 +1,7 @@
 import colors from 'vuetify/es5/util/colors'
 
+const { SLACK_API_TOKEN, CHANNEL_ID } = process.env;
+
 export default {
   mode: 'universal',
   /*
@@ -25,6 +27,9 @@ export default {
   ** Global CSS
   */
   css: [
+    '@/assets/messageCard.css',
+    '@/assets/threads.css',
+    '@/assets/custom.css'
   ],
   /*
   ** Plugins to load before mounting the App
@@ -41,6 +46,8 @@ export default {
   ** Nuxt.js modules
   */
   modules: [
+    '@nuxtjs/axios',
+    '@nuxtjs/dotenv'
   ],
   /*
   ** vuetify module configuration
@@ -72,5 +79,9 @@ export default {
     */
     extend (config, ctx) {
     }
+  },
+  env: {
+    SLACK_API_TOKEN,
+    CHANNEL_ID
   }
 }
