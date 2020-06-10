@@ -129,7 +129,7 @@ export default {
 
       this.$axios.post(
         `https://slack.com/api/chat.postMessage?${this.convertParamObjIntoQueryString(params)}`
-      ).then((res) => {console.log(res)})
+      )
       this.messageForPost = "";
     }
   }
