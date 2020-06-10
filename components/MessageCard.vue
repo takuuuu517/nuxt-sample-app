@@ -7,7 +7,9 @@
     </v-list-item>
 
     <v-card-actions v-if="!isThread">
-      <v-btn text v-if="message.reply_count" v-on:click="showThread">{{message.reply_count}}件の返信</v-btn>
+      <v-btn v-if="message.reply_count" text @click="showThread">
+        {{ message.reply_count }}件の返信
+      </v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -17,8 +19,8 @@ export default {
   props: ["message", "isThread"],
   methods: {
     showThread() {
-      this.$emit('showThread', this.message.ts);
+      this.$emit("showThread", this.message.ts)
     },
-  }
+  },
 }
 </script>
