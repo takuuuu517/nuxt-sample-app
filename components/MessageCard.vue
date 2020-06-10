@@ -19,7 +19,7 @@ export default {
   props: ["message", "isThread"],
   methods: {
     showThread() {
-      this.$emit("showThread", this.message.ts)
+      this.$emit("show-thread", this.message.ts)
     },
   },
 }

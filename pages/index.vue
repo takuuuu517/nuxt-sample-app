@@ -8,7 +8,7 @@
         :key="message.ts"
         :message="message"
         :is-thread="false"
-        @showThread="showThread($event)"
+        @show-thread="showThread($event)"
       />
 
       <br />
@@ -82,7 +82,7 @@ export default {
     MessageCard,
   },
   async asyncData({ $axios }) {
-    return $axios
+    return await $axios
       .get(
         `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
       )
@@ -91,7 +91,7 @@ export default {
         return {
           messages: res.data.messages,
           page: 1,
-          pageSize: pageSize,
+          pageSize,
           displayMessages: res.data.messages.slice(0, pageSize),
           pageLength: res.data.messages.length / pageSize,
           threadShow: false,
@@ -113,7 +113,7 @@ export default {
     },
     convertParamObjIntoQueryString(params) {
       const ret = []
-      for (let param in params)
+      for (const param in params)
         ret.push(
           encodeURIComponent(param) + "=" + encodeURIComponent(params[param])
         )
@@ -137,13 +137,13 @@ export default {
     },
 
     postMessage() {
-      let params = {
+      const params = {
         token: process.env.SLACK_API_TOKEN,
         channel: process.env.CHANNEL_ID,
         text: this.messageForPost,
       }
       if (this.threadTs !== null) {
-        params["thread_ts"] = this.threadTs
+        params.thread_ts = this.threadTs
       }
 
       this.$axios.post(
