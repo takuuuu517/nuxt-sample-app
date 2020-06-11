@@ -15,7 +15,7 @@
       <h2>メッセージを投稿する</h2>
       <message-form @message-posted="refreshMessages" />
 
-      <v-pagination v-model="page" :length="pageLength" @input="selectPage" />
+      <v-pagination v-model="page" :length="getPageLength" @input="selectPage" />
     </v-flex>
     <v-flex v-show="threadShow" class="thread-column">
       <h3 class="center">
@@ -45,7 +45,7 @@
 
       <br />
       <h3>返信する</h3>
-      <message-form :thread-ts="threadTs" @message-posted="refreshMessages" />
+      <message-form :threadTs="threadTs" @message-posted="refreshMessages" />
     </v-flex>
   </v-layout>
 </template>
@@ -58,6 +58,11 @@ export default {
   components: {
     MessageCard,
     MessageForm,
+  },
+  computed: {
+    getPageLength() {
+      return parseInt(this.pageLength)
+    }
   },
   async asyncData({ $axios }) {
     return await $axios
@@ -105,11 +110,7 @@ export default {
       this.threadTs = null
       this.threadShow = false
     },
-    sleep(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms))
-    },
     async refreshMessages() {
-      await this.sleep(1000) // post api終了待ち
       this.$axios
         .get(
           `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`

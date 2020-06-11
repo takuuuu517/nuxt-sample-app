@@ -47,9 +47,10 @@ export default {
         `https://slack.com/api/chat.postMessage?${this.convertParamObjIntoQueryString(
           params
         )}`
-      )
-      this.messageForPost = ""
-      this.$emit("message-posted")
+      ).then((res) => {
+        this.messageForPost = ""
+        this.$emit("message-posted")
+      })
     },
   },
 }
