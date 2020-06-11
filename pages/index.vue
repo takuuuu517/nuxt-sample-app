@@ -13,19 +13,7 @@
 
       <br />
       <h2>メッセージを投稿する</h2>
-      <form>
-        <v-textarea
-          v-model="messageForPost"
-          outlined
-          label="メッセージを入力してください"
-        />
-      </form>
-
-      <div>
-        <v-btn large color="primary" @click="postMessage">
-          SEND
-        </v-btn>
-      </div>
+      <message-form @message-posted="refreshMessages" />
 
       <v-pagination v-model="page" :length="pageLength" @input="selectPage" />
     </v-flex>
@@ -57,29 +45,22 @@
 
       <br />
       <h3>返信する</h3>
-      <form>
-        <v-textarea
-          v-model="messageForPost"
-          outlined
-          label="メッセージを入力してください"
-        />
-      </form>
-
-      <div>
-        <v-btn large color="primary" @click="postMessage">
-          SEND
-        </v-btn>
-      </div>
+      <message-form
+        :threadTs="threadTs"
+        @message-posted="refreshMessages"
+      />
     </v-flex>
   </v-layout>
 </template>
 
 <script>
 import MessageCard from "~/components/MessageCard.vue"
+import MessageForm from "~/components/MessageForm.vue"
 
 export default {
   components: {
     MessageCard,
+    MessageForm
   },
   async asyncData({ $axios }) {
     return await $axios
@@ -111,14 +92,6 @@ export default {
       this.closeThread()
       window.scrollTo(0, 0)
     },
-    convertParamObjIntoQueryString(params) {
-      const ret = []
-      for (const param in params)
-        ret.push(
-          encodeURIComponent(param) + "=" + encodeURIComponent(params[param])
-        )
-      return ret.join("&")
-    },
     showThread(ts) {
       this.$axios
         .get(
@@ -135,23 +108,27 @@ export default {
       this.threadTs = null
       this.threadShow = false
     },
-
-    postMessage() {
-      const params = {
-        token: process.env.SLACK_API_TOKEN,
-        channel: process.env.CHANNEL_ID,
-        text: this.messageForPost,
-      }
-      if (this.threadTs !== null) {
-        params.thread_ts = this.threadTs
-      }
-
-      this.$axios.post(
-        `https://slack.com/api/chat.postMessage?${this.convertParamObjIntoQueryString(
-          params
-        )}`
-      )
-      this.messageForPost = ""
+    sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
+    async refreshMessages() {
+      await this.sleep(1000);  // post api終了待ち
+      this.$axios
+        .get(
+          `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+        )
+        .then((res) => {
+          this.messages = res.data.messages;
+          this.displayMessages = this.messages.slice(
+            (this.page - 1) * 10,
+            this.pageSize * this.page
+          )
+          if (this.threadShow  === true) {
+            this.showThread(this.threadTs);
+          } else {
+            window.scrollTo(0, 0);
+          }
+        })
     },
   },
 }
