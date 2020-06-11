@@ -18,7 +18,7 @@
 
 <script>
 export default {
-  props: ["thread-ts"],
+  props: ["threadTs"],
   data() {
     return {
       messageForPost: "",
