@@ -15,12 +15,12 @@
 </template>
 
 <script>
-  export default {
-    props: ["message", "isThread"],
-    methods: {
-      showThread() {
-        this.$emit("show-thread", this.message.ts)
-      },
+export default {
+  props: ["message", "isThread"],
+  methods: {
+    showThread() {
+      this.$emit("show-thread", this.message.ts)
     },
-  }
+  },
+}
 </script>

@@ -17,40 +17,40 @@
 </template>
 
 <script>
-  export default {
-    props: ["thread-ts"],
-    data: function() {
-      return {
-        "messageForPost": "",
-      };
-    },
-    methods: {
-      convertParamObjIntoQueryString(params) {
-        const ret = []
-        for (const param in params)
-          ret.push(
-            encodeURIComponent(param) + "=" + encodeURIComponent(params[param])
-          )
-        return ret.join("&");
-      },
-      postMessage() {
-        let params = {
-          token: process.env.SLACK_API_TOKEN,
-          channel: process.env.CHANNEL_ID,
-          text: this.messageForPost,
-        }
-        if (this.threadTs !== undefined) {
-          params.thread_ts = this.threadTs
-        }
-
-        this.$axios.post(
-          `https://slack.com/api/chat.postMessage?${this.convertParamObjIntoQueryString(
-            params
-          )}`
+export default {
+  props: ["thread-ts"],
+  data() {
+    return {
+      messageForPost: "",
+    }
+  },
+  methods: {
+    convertParamObjIntoQueryString(params) {
+      const ret = []
+      for (const param in params)
+        ret.push(
+          encodeURIComponent(param) + "=" + encodeURIComponent(params[param])
         )
-        this.messageForPost = ""
-        this.$emit("message-posted");
-      },
+      return ret.join("&")
     },
-  }
+    postMessage() {
+      const params = {
+        token: process.env.SLACK_API_TOKEN,
+        channel: process.env.CHANNEL_ID,
+        text: this.messageForPost,
+      }
+      if (this.threadTs !== undefined) {
+        params.thread_ts = this.threadTs
+      }
+
+      this.$axios.post(
+        `https://slack.com/api/chat.postMessage?${this.convertParamObjIntoQueryString(
+          params
+        )}`
+      )
+      this.messageForPost = ""
+      this.$emit("message-posted")
+    },
+  },
+}
 </script>

@@ -45,10 +45,7 @@
 
       <br />
       <h3>返信する</h3>
-      <message-form
-        :threadTs="threadTs"
-        @message-posted="refreshMessages"
-      />
+      <message-form :thread-ts="threadTs" @message-posted="refreshMessages" />
     </v-flex>
   </v-layout>
 </template>
@@ -60,7 +57,7 @@ import MessageForm from "~/components/MessageForm.vue"
 export default {
   components: {
     MessageCard,
-    MessageForm
+    MessageForm,
   },
   async asyncData({ $axios }) {
     return await $axios
@@ -109,24 +106,24 @@ export default {
       this.threadShow = false
     },
     sleep(ms) {
-      return new Promise(resolve => setTimeout(resolve, ms));
+      return new Promise((resolve) => setTimeout(resolve, ms))
     },
     async refreshMessages() {
-      await this.sleep(1000);  // post api終了待ち
+      await this.sleep(1000) // post api終了待ち
       this.$axios
         .get(
           `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
         )
         .then((res) => {
-          this.messages = res.data.messages;
+          this.messages = res.data.messages
           this.displayMessages = this.messages.slice(
             (this.page - 1) * 10,
             this.pageSize * this.page
           )
-          if (this.threadShow  === true) {
-            this.showThread(this.threadTs);
+          if (this.threadShow === true) {
+            this.showThread(this.threadTs)
           } else {
-            window.scrollTo(0, 0);
+            window.scrollTo(0, 0)
           }
         })
     },
