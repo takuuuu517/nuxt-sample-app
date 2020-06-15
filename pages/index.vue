@@ -4,7 +4,7 @@
       <br />
       <h2>メッセージ一覧</h2>
       <message-card
-        v-for="message in displayMessages"
+        v-for="message in this.$store.state.messages.displayMessages"
         :key="message.ts"
         :message="message"
         :is-thread="false"
@@ -37,7 +37,7 @@
       </div>
       <br />
       <message-card
-        v-for="message in threadMessages"
+        v-for="message in this.getThreadMessages"
         :key="message.ts"
         :message="message"
         :is-thread="true"
@@ -54,43 +54,49 @@
 import MessageCard from "~/components/MessageCard.vue"
 import MessageForm from "~/components/MessageForm.vue"
 
+const pageSize = 10;
+
 export default {
   components: {
     MessageCard,
     MessageForm,
   },
-  computed: {
-    getPageLength() {
-      return parseInt(this.pageLength)
+  data () {
+    return {
+      page: 1,
+      pageSize: 10,
+      threadShow: false,
+      messageForPost: "",
+      threadTs: null
     }
   },
-  async asyncData({ $axios }) {
-    return await $axios
-      .get(
-        `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
-      )
-      .then((res) => {
-        const pageSize = 10
-        return {
-          messages: res.data.messages,
-          page: 1,
-          pageSize,
-          displayMessages: res.data.messages.slice(0, pageSize),
-          pageLength: res.data.messages.length / pageSize,
-          threadShow: false,
-          threadMessages: [],
-          messageForPost: "",
-          threadTs: null,
-        }
-      })
+  async fetch({ store, $axios }){
+    let res = await $axios.get(
+      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+    )
+    this.messages = res.data.messages;
+    store.commit("messages/SET_MESSAGES", res.data.messages);
+    store.commit("messages/SET_DISPLAY_MESSAGES", res.data.messages.slice(0, pageSize));
+    store.commit("messages/SET_PAGE_LENGTH", res.data.messages.length / pageSize);
+  },
+  computed: {
+    getThreadMessages() {
+      return this.$store.state.messages.threadMessages;
+    },
+    getPageLength() {
+      return parseInt(this.$store.state.messages.pageLength)
+    },
+    getDisplayMessages() {
+      return this.displayMessages;
+    }
   },
   methods: {
     selectPage(selectedPage) {
       this.page = selectedPage
-      this.displayMessages = this.messages.slice(
+      this.$store.commit("messages/SET_DISPLAY_MESSAGES", this.$store.state.messages.messages.slice(
         (this.page - 1) * 10,
-        this.pageSize * this.page
-      )
+        pageSize * this.page
+      ));
       this.closeThread()
       window.scrollTo(0, 0)
     },
@@ -100,13 +106,13 @@ export default {
           `https://slack.com/api/conversations.replies?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}&ts=${ts}`
         )
         .then((res) => {
-          this.threadMessages = res.data.messages
+          this.$store.commit("messages/SET_THREAD_MESSAGES", res.data.messages);
           this.threadShow = true
           this.threadTs = ts
         })
     },
     closeThread() {
-      this.threadMessages = []
+      this.$store.commit("messages/SET_THREAD_MESSAGES", [])
       this.threadTs = null
       this.threadShow = false
     },
@@ -116,11 +122,11 @@ export default {
           `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
         )
         .then((res) => {
-          this.messages = res.data.messages
-          this.displayMessages = this.messages.slice(
+          this.$store.commit("messages/SET_MESSAGES", res.data.messages)
+          this.$store.commit("messages/SET_DISPLAY_MESSAGES", res.data.messages.slice(
             (this.page - 1) * 10,
-            this.pageSize * this.page
-          )
+            pageSize * this.page
+          ));
           if (this.threadShow === true) {
             this.showThread(this.threadTs)
           } else {
