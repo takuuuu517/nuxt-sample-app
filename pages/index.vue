@@ -48,16 +48,12 @@ export default {
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
     ).then((res) => {
       const pageSize = 10;
-      var p_length = 1;
-      if (!!(res.data.messages.length)) {
-        p_length = Math.ceil(res.data.messages.length / pageSize);
-      }
       return {
         messages: res.data.messages,
         page: 1,
         pageSize: pageSize,
         displayMessages: res.data.messages.slice(0, pageSize),
-        pageLength: p_length,
+        pageLength: Math.ceil(res.data.messages.length / pageSize),
         threadShow: false,
         threadMessages: [],
       }
