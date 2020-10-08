@@ -1,7 +1,7 @@
 <template>
   <v-layout>
     <v-flex>
-      <message-card 
+      <message-card
         v-for="message in displayMessages"
         v-bind:message="message"
         v-bind:isThread=false
@@ -23,7 +23,7 @@
         </v-btn>
       </div>
       <br>
-      <message-card 
+      <message-card
         v-for="message in threadMessages"
         v-bind:message="message"
         v-bind:isThread=true
@@ -40,17 +40,20 @@ export default {
   components: {
     MessageCard
   },
+  data: function () {
+    return { pageLength: 1}
+  },
   async asyncData ({ $axios }) {
     return $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
     ).then((res) => {
       const pageSize = 10;
-      return { 
+      return {
         messages: res.data.messages,
         page: 1,
         pageSize: pageSize,
         displayMessages: res.data.messages.slice(0, pageSize),
-        pageLength: res.data.messages.length / pageSize,
+        pageLength: Math.ceil(res.data.messages.length / pageSize),
         threadShow: false,
         threadMessages: [],
       }
