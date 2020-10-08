@@ -9,6 +9,17 @@
         @showThread="showThread($event)"
       ></message-card>
 
+      <v-form ref="form">
+        <v-textarea
+          v-model="sendingMessage"
+          :counter="max"
+          :rules="rules"
+          label="投稿メッセージ"
+          placeholder="投稿文書、リンク、画像url"
+        ></v-textarea>
+        <v-btn @click="submit">submit</v-btn>
+      </v-form>
+
       <v-pagination
         v-model="page"
         :length="pageLength"
@@ -38,15 +49,14 @@ import MessageCard from '~/components/MessageCard.vue'
 
 export default {
   components: {
-    MessageCard
+    MessageCard,
   },
-  data: function () {
-    return { pageLength: 1}
-  },
+
   async asyncData ({ $axios }) {
     return $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
     ).then((res) => {
+      console.log(res.data.messages[9]);
       const pageSize = 10;
       return {
         messages: res.data.messages,
@@ -59,6 +69,26 @@ export default {
       }
     })
   },
+  data: () => ({
+    allowSpaces: false,
+    max: 4000,
+    sendingMessage: ""
+  }),
+
+  computed: {
+    rules () {
+      const rules = []
+
+      if (this.max) {
+        const rule =
+        v => (v || '').length <= this.max || `文字数の制限は${this.max}文字です`
+        rules.push(rule)
+      }
+
+      return rules
+    }
+  },
+
   methods: {
     selectPage(selectedPage) {
       this.page = selectedPage;
@@ -77,7 +107,14 @@ export default {
     closeThread() {
       this.threadMessages = [];
       this.threadShow = false;
+    },
+    submit() {
+      this.$axios.post(
+        `https://slack.com/api/chat.postMessage?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}&text=${this.sendingMessage}`)
+        .then(response => alert("投稿されました"))
+        .catch(error => console.log(serror))
     }
   }
 }
+
 </script>
