@@ -56,7 +56,6 @@ export default {
     return $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
     ).then((res) => {
-      console.log(res.data.messages[9]);
       const pageSize = 10;
       return {
         messages: res.data.messages,
@@ -72,13 +71,12 @@ export default {
   data: () => ({
     allowSpaces: false,
     max: 4000,
-    sendingMessage: ""
+    sendingMessage: "",
   }),
 
   computed: {
     rules () {
       const rules = []
-
       if (this.max) {
         const rule =
         v => (v || '').length <= this.max || `文字数の制限は${this.max}文字です`
@@ -109,6 +107,9 @@ export default {
       this.threadShow = false;
     },
     submit() {
+      if(!this.$refs.form.validate()){
+        return;
+      }
       this.$axios.post(
         `https://slack.com/api/chat.postMessage?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}&text=${this.sendingMessage}`)
         .then(response => alert("投稿されました"))
