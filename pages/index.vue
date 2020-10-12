@@ -15,7 +15,7 @@
           :counter="max"
           :rules="rules"
           label="投稿メッセージ"
-          placeholder="投稿文書、リンク、画像url"
+          placeholder="投稿文書、URL"
         ></v-textarea>
         <v-btn @click="submit">submit</v-btn>
       </v-form>
@@ -69,7 +69,6 @@ export default {
     })
   },
   data: () => ({
-    allowSpaces: false,
     max: 4000,
     sendingMessage: "",
   }),
@@ -82,7 +81,6 @@ export default {
         v => (v || '').length <= this.max || `文字数の制限は${this.max}文字です`
         rules.push(rule)
       }
-
       return rules
     }
   },
@@ -112,8 +110,15 @@ export default {
       }
       this.$axios.post(
         `https://slack.com/api/chat.postMessage?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}&text=${this.sendingMessage}`)
-        .then(response => alert("投稿されました"))
-        .catch(error => console.log(serror))
+        .then(response => {
+          if(response.data.ok == false) {
+            alert(response.data.error)
+          }else {
+            alert("投稿できました。");
+            this.sendingMessage = ""
+          }
+        })
+        .catch(error => alert(error));
     }
   }
 }

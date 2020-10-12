@@ -2,7 +2,7 @@
   <v-card class="messageCard">
     <v-list-item three-line>
       <v-list-item-content>
-        {{ stringToATag(message.text) }}
+        <p v-html="messageWithHTMLTag(message.text)"></p>
       </v-list-item-content>
     </v-list-item>
 
@@ -15,30 +15,54 @@
 <script>
 export default {
   props: ["message", "isThread"],
+
   methods: {
     showThread() {
       this.$emit('showThread', this.message.ts);
     },
-    stringToATag(text) {
-      var arr = text.match(/\<.+?\..+?\>/);
+    replaceLinkWithATag(actualLink, displayLink){
+      var htmlTagLink = actualLink.link(actualLink);
+      if(displayLink){
+        htmlTagLink = displayLink.link(actualLink);
+      }
+      htmlTagLink = htmlTagLink.replace('a href=', 'a target="_blank" href=');
+      return htmlTagLink
+    },
+    escape(text, links){
+      var surroundedByAngleBracket =
+        text.match(/<.+?\>/g).filter(n => !links.includes(n));
+      surroundedByAngleBracket.forEach((elementInside) => {
+        text = text.replace(elementInside, elementInside.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+      });
+      return text;
+    },
+    messageWithHTMLTag(text) {
+      var matchedLinks = text.match(/<http.+?\>/g);
+      var imageTags = [];
 
-      if(!arr) {
-        return text;
+      if(!matchedLinks) {
+        return text; // no link
       } else {
-        var matchedLinks = text.match(/\<.+?\..+?\>/);
+        text = this.escape(text, matchedLinks)
 
         matchedLinks.forEach((matchedLink) => {
-          var links = matchedLink.substring(1, matchedLink.length -1 ).split('|');
+          var links = matchedLink.substring(1, matchedLink.length - 1).split('|');
           var actualLink = links[0];
           var displayLink = links[1];
 
-          var htmlTagLink = actualLink.link(actualLink);
-          if(displayLink){
-            htmlTagLink = displayLink.link(actualLink);
+          if ((/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(actualLink)) {
+            imageTags.push(`<img src=${actualLink} width="200"> `);
+            text = text.replace(matchedLink, actualLink.replace(actualLink, ''));
+          } else {
+            var htmlTagLink = this.replaceLinkWithATag(actualLink, displayLink)
+            text = text.replace(matchedLink, htmlTagLink);
           }
-          // text = text.replace(matchedLink, htmlTagLink);
-          text = text.replace(matchedLink, actualLink);
         });
+        text += "<br>"
+        imageTags.forEach((imgTag) => {
+          text += imgTag;
+        });
+
         return text;
       }
     }
