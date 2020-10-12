@@ -18,35 +18,44 @@ export default {
 
   computed: {
     messageWithHTMLTag() {
-      let text = this.message.text
-      let matchedLinks = text.match(/<http.+?\>/g);
-      let imageTags = [];
+      const httpMatchRegex = /<http.+?\>/g;
+      const angleBracketRegex = /<.+?\>/g;
+      const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i;
+      let words = this.message.text.split(/(<.+?>)/)
+      let new_words = []
+      let images = []
 
-      if(!matchedLinks) {
-        return text; // no link
-      }
-      text = this.escape(text, matchedLinks)
+      words.forEach((word) => {
+        if((angleBracketRegex).test(word)) {
+          if((httpMatchRegex).test(word)){ /// link
+            let links, actualLink, displayLink, htmlTagLink;
+            links = word.substring(1, word.length - 1).split('|');
+            actualLink = links[0];
+            displayLink = links[1];
 
-      matchedLinks.forEach((matchedLink) => {
-        let links, actualLink, displayLink, htmlTagLink;
-        links = matchedLink.substring(1, matchedLink.length - 1).split('|');
-        actualLink = links[0];
-        displayLink = links[1];
-
-        if ((/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(actualLink)) {
-          imageTags.push(`<img src=${actualLink} width="200"> `);
-          text = text.replace(matchedLink, actualLink.replace(actualLink, ''));
+            if(imgRegex.test(actualLink)){
+              images.push(`<img src=${actualLink} width="200"> `);
+              new_words.push('');
+            } else { // link
+              new_words.push(this.replaceLinkWithATag(actualLink, displayLink));
+            }
+          } else { // needs to escape
+            new_words.push(word.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+          }
         } else {
-          htmlTagLink = this.replaceLinkWithATag(actualLink, displayLink)
-          text = text.replace(matchedLink, htmlTagLink);
+          new_words.push(word)
         }
       });
-      text += "<br>"
-      imageTags.forEach((imgTag) => {
-        text += imgTag;
-      });
 
-      return text;
+      let new_message = new_words.join('');
+      if(new_words.length > 0) {
+        new_message += "<br>"
+        images.forEach((imgTag) => {
+          new_message += imgTag;
+        });
+        return new_message;
+      }
+      return new_words.join('')
     }
   },
 
@@ -62,14 +71,6 @@ export default {
       htmlTagLink = htmlTagLink.replace('a href=', 'a target="_blank" href=');
       return htmlTagLink
     },
-    escape(text, links){
-      let surroundedByAngleBracket =
-        text.match(/<.+?\>/g).filter(n => !links.includes(n));
-      surroundedByAngleBracket.forEach((elementInside) => {
-        text = text.replace(elementInside, elementInside.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
-      });
-      return text;
-    }
   },
 }
 </script>
