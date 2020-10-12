@@ -8,7 +8,6 @@
         v-bind:key="message.ts"
         @showThread="showThread($event)"
       ></message-card>
-
       <v-form ref="form">
         <v-textarea
           v-model="sendingMessage"
@@ -19,7 +18,6 @@
         ></v-textarea>
         <v-btn @click="submit">submit</v-btn>
       </v-form>
-
       <v-pagination
         v-model="page"
         :length="pageLength"
@@ -51,7 +49,6 @@ export default {
   components: {
     MessageCard,
   },
-
   async asyncData ({ $axios }) {
     return $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
@@ -72,7 +69,6 @@ export default {
     max: 4000,
     sendingMessage: "",
   }),
-
   computed: {
     rules () {
       const rules = []
@@ -84,7 +80,6 @@ export default {
       return rules
     }
   },
-
   methods: {
     selectPage(selectedPage) {
       this.page = selectedPage;
@@ -123,5 +118,4 @@ export default {
     }
   }
 }
-
 </script>
