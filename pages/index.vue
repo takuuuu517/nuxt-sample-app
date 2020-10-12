@@ -49,6 +49,7 @@ export default {
   components: {
     MessageCard,
   },
+
   async asyncData ({ $axios }) {
     return $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
@@ -65,10 +66,12 @@ export default {
       }
     })
   },
+
   data: () => ({
     max: 4000,
     sendingMessage: "",
   }),
+
   computed: {
     rules () {
       const rules = []
@@ -80,6 +83,7 @@ export default {
       return rules
     }
   },
+
   methods: {
     selectPage(selectedPage) {
       this.page = selectedPage;
@@ -87,6 +91,7 @@ export default {
       this.closeThread();
       window.scrollTo(0,0)
     },
+
     showThread(ts) {
       this.$axios.get(
         `https://slack.com/api/conversations.replies?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}&ts=${ts}`
@@ -95,10 +100,12 @@ export default {
         this.threadShow = true;
       })
     },
+
     closeThread() {
       this.threadMessages = [];
       this.threadShow = false;
     },
+
     submit() {
       if(!this.$refs.form.validate()){
         alert("文字数オーバーです。");
