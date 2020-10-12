@@ -2,7 +2,7 @@
   <v-card class="messageCard">
     <v-list-item three-line>
       <v-list-item-content>
-        <div v-html="messageWithHTMLTag(message.text)"/>
+        <div v-html="messageWithHTMLTag"/>
       </v-list-item-content>
     </v-list-item>
 
@@ -16,27 +16,9 @@
 export default {
   props: ["message", "isThread"],
 
-  methods: {
-    showThread() {
-      this.$emit('showThread', this.message.ts);
-    },
-    replaceLinkWithATag(actualLink, displayLink){
-      let htmlTagLink = actualLink.link(actualLink);
-      if(displayLink){
-        htmlTagLink = displayLink.link(actualLink);
-      }
-      htmlTagLink = htmlTagLink.replace('a href=', 'a target="_blank" href=');
-      return htmlTagLink
-    },
-    escape(text, links){
-      let surroundedByAngleBracket =
-        text.match(/<.+?\>/g).filter(n => !links.includes(n));
-      surroundedByAngleBracket.forEach((elementInside) => {
-        text = text.replace(elementInside, elementInside.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
-      });
-      return text;
-    },
-    messageWithHTMLTag(text) {
+  computed: {
+    messageWithHTMLTag() {
+      let text = this.message.text
       let matchedLinks = text.match(/<http.+?\>/g);
       let imageTags = [];
 
@@ -66,6 +48,28 @@ export default {
 
         return text;
       }
+    }
+  },
+
+  methods: {
+    showThread() {
+      this.$emit('showThread', this.message.ts);
+    },
+    replaceLinkWithATag(actualLink, displayLink){
+      let htmlTagLink = actualLink.link(actualLink);
+      if(displayLink){
+        htmlTagLink = displayLink.link(actualLink);
+      }
+      htmlTagLink = htmlTagLink.replace('a href=', 'a target="_blank" href=');
+      return htmlTagLink
+    },
+    escape(text, links){
+      let surroundedByAngleBracket =
+        text.match(/<.+?\>/g).filter(n => !links.includes(n));
+      surroundedByAngleBracket.forEach((elementInside) => {
+        text = text.replace(elementInside, elementInside.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+      });
+      return text;
     }
   },
 }
