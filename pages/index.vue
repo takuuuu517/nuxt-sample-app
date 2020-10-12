@@ -106,6 +106,7 @@ export default {
     },
     submit() {
       if(!this.$refs.form.validate()){
+        alert("文字数オーバーです。");
         return;
       }
       this.$axios.post(
