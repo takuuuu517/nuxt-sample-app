@@ -18,6 +18,7 @@ export default {
 
   computed: {
     messageWithHTMLTag() {
+      console.log(this.message.text);
       const httpMatchRegex = /<http.+?\>/g;
       const angleBracketRegex = /<.+?\>/g;
       const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i;
@@ -28,11 +29,7 @@ export default {
       words.forEach((word) => {
         if((angleBracketRegex).test(word)) {
           if((httpMatchRegex).test(word)){ /// link
-            let links, actualLink, displayLink, htmlTagLink;
-            links = word.substring(1, word.length - 1).split('|');
-            actualLink = links[0];
-            displayLink = links[1];
-
+            const [actualLink, displayLink] = word.match(/(?<=\<).*?(?=\>)/)[0].split('|')
             if(imgRegex.test(actualLink)){
               images.push(`<img src=${actualLink} width="200"> `);
               new_words.push('');
@@ -48,7 +45,7 @@ export default {
       });
 
       let new_message = new_words.join('');
-      if(new_words.length > 0) {
+      if(images.length > 0) {
         new_message += "<br>"
         images.forEach((imgTag) => {
           new_message += imgTag;
@@ -64,12 +61,7 @@ export default {
       this.$emit('showThread', this.message.ts);
     },
     replaceLinkWithATag(actualLink, displayLink){
-      let htmlTagLink = actualLink.link(actualLink);
-      if(displayLink){
-        htmlTagLink = displayLink.link(actualLink);
-      }
-      htmlTagLink = htmlTagLink.replace('a href=', 'a target="_blank" href=');
-      return htmlTagLink
+      return `<a href="${actualLink}" target="_blank">${displayLink || actualLink}</a>`
     },
   },
 }
