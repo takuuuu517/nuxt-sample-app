@@ -24,30 +24,29 @@ export default {
 
       if(!matchedLinks) {
         return text; // no link
-      } else {
-        text = this.escape(text, matchedLinks)
-
-        matchedLinks.forEach((matchedLink) => {
-          let links, actualLink, displayLink, htmlTagLink;
-          links = matchedLink.substring(1, matchedLink.length - 1).split('|');
-          actualLink = links[0];
-          displayLink = links[1];
-
-          if ((/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(actualLink)) {
-            imageTags.push(`<img src=${actualLink} width="200"> `);
-            text = text.replace(matchedLink, actualLink.replace(actualLink, ''));
-          } else {
-            htmlTagLink = this.replaceLinkWithATag(actualLink, displayLink)
-            text = text.replace(matchedLink, htmlTagLink);
-          }
-        });
-        text += "<br>"
-        imageTags.forEach((imgTag) => {
-          text += imgTag;
-        });
-
-        return text;
       }
+      text = this.escape(text, matchedLinks)
+
+      matchedLinks.forEach((matchedLink) => {
+        let links, actualLink, displayLink, htmlTagLink;
+        links = matchedLink.substring(1, matchedLink.length - 1).split('|');
+        actualLink = links[0];
+        displayLink = links[1];
+
+        if ((/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i).test(actualLink)) {
+          imageTags.push(`<img src=${actualLink} width="200"> `);
+          text = text.replace(matchedLink, actualLink.replace(actualLink, ''));
+        } else {
+          htmlTagLink = this.replaceLinkWithATag(actualLink, displayLink)
+          text = text.replace(matchedLink, htmlTagLink);
+        }
+      });
+      text += "<br>"
+      imageTags.forEach((imgTag) => {
+        text += imgTag;
+      });
+
+      return text;
     }
   },
 
