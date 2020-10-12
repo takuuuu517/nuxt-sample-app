@@ -2,7 +2,7 @@
   <v-card class="messageCard">
     <v-list-item three-line>
       <v-list-item-content>
-        <p v-html="messageWithHTMLTag(message.text)"></p>
+        <div v-html="messageWithHTMLTag(message.text)"/>
       </v-list-item-content>
     </v-list-item>
 
