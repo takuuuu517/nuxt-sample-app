@@ -2,7 +2,7 @@
   <v-layout>
     <v-flex>
       <message-card
-        v-for="message in displayMessages"
+        v-for="message in this.replaceMessages(displayMessages)"
         v-bind:message="message"
         v-bind:isThread=false
         v-bind:key="message.ts"
@@ -85,6 +85,37 @@ export default {
   },
 
   methods: {
+    replaceMessages(displayMessages) {
+      // return displayMessages;
+      const userMentionRegex = /<@[A-Z0-9]+?>/gm;
+      displayMessages.forEach((message) => {
+        let sendingUser = this.getUserName(message.user);
+
+        let userIds = message.text.match(userMentionRegex);
+        if(userIds){
+          userIds.forEach((userId) => {
+            let userName = this.getUserName(userId.substring(2, userId.length-1))
+            message.text = "<" + sendingUser + ">" + message.text.replace(userId, '@'+userName)
+          });
+        }
+      });
+      return displayMessages
+    },
+
+    getUserName(userId){
+      return　this.$axios.get(
+        `https://slack.com/api/users.info?token=${process.env.SLACK_API_TOKEN}&user=${userId}`)
+        .then(response => {
+          // console.log(response);
+          if(response.data.ok == false) {
+            alert(response.data.error)
+            return;
+          }
+          return response.data.user.profile.display_name;
+        })
+        .catch(error => alert(error));
+    },
+
     selectPage(selectedPage) {
       this.page = selectedPage;
       this.displayMessages = this.messages.slice((this.page - 1) * 10, this.pageSize * this.page)

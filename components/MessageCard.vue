@@ -58,19 +58,6 @@ export default {
     replaceLinkWithATag(actualLink, displayLink){
       return `<a href="${actualLink}" target="_blank">${displayLink || actualLink}</a>`
     },
-
-    getUserName(userId){
-      this.$axios.get(
-        `https://slack.com/api/users.info?token=${process.env.SLACK_API_TOKEN}&user=${userId}`)
-        .then(response => {
-          if(response.data.ok == false) {
-            alert(response.data.error)
-            return;
-          }
-          return response.data.user.profile.display_name;
-        })
-        .catch(error => alert(error));
-    }
   },
 }
 </script>
