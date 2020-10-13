@@ -2,7 +2,7 @@
   <v-card class="messageCard">
     <v-list-item three-line>
       <v-list-item-content>
-        <div v-html="messageWithHTMLTag"/><br>
+        <div v-html="messageWithHTMLTag"/>
         <div v-if="message.files" v-for="image in message.files">
           <img :class="imageBox" :src="image.url_private" :width="200">
         </div>
