@@ -20,27 +20,22 @@ export default {
     messageWithHTMLTag() {
       console.log(this.message.text);
       const httpMatchRegex = /<http.+?\>/g;
-      const angleBracketRegex = /<.+?\>/g;
       const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i;
       let words = this.message.text.split(/(<.+?>)/)
       let new_words = []
       let images = []
 
       words.forEach((word) => {
-        if((angleBracketRegex).test(word)) {
-          if((httpMatchRegex).test(word)){ /// link
-            const [actualLink, displayLink] = word.match(/(?<=\<).*?(?=\>)/)[0].split('|')
-            if(imgRegex.test(actualLink)){
-              images.push(`<img src=${actualLink} width="200"> `);
-              new_words.push('');
-            } else { // link
-              new_words.push(this.replaceLinkWithATag(actualLink, displayLink));
-            }
-          } else { // needs to escape
-            new_words.push(word.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+        if((httpMatchRegex).test(word)) {
+          const [actualLink, displayLink] = word.match(/(?<=\<).*?(?=\>)/)[0].split('|')
+          if(imgRegex.test(actualLink)){
+            images.push(`<img src=${actualLink} width="200"> `);
+            new_words.push('');
+          } else { // link
+            new_words.push(this.replaceLinkWithATag(actualLink, displayLink));
           }
         } else {
-          new_words.push(word)
+          new_words.push(word.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
         }
       });
 
