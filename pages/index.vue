@@ -7,13 +7,22 @@
         v-bind:isThread=false
         v-bind:key="message.ts"
         @showThread="showThread($event)"
-      ></message-card>
-
+      />
+      <v-form ref="form">
+        <v-textarea
+          v-model="sendingMessage"
+          :counter="max"
+          :rules="rules"
+          label="投稿メッセージ"
+          placeholder="投稿文書、URL"
+        />
+        <v-btn @click="submit">submit</v-btn>
+      </v-form>
       <v-pagination
         v-model="page"
         :length="pageLength"
         @input = "selectPage"
-      ></v-pagination>
+      />
     </v-flex>
     <v-flex class="thread-column" v-show="threadShow">
       <h3 class="center">スレッド</h3>
@@ -28,7 +37,7 @@
         v-bind:message="message"
         v-bind:isThread=true
         v-bind:key="message.ts"
-      ></message-card>
+      />
     </v-flex>
   </v-layout>
 </template>
@@ -38,11 +47,9 @@ import MessageCard from '~/components/MessageCard.vue'
 
 export default {
   components: {
-    MessageCard
+    MessageCard,
   },
-  data: function () {
-    return { pageLength: 1}
-  },
+
   async asyncData ({ $axios }) {
     return $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
@@ -59,6 +66,24 @@ export default {
       }
     })
   },
+
+  data: () => ({
+    max: 4000,
+    sendingMessage: "",
+  }),
+
+  computed: {
+    rules () {
+      const rules = []
+      if (this.max) {
+        const rule =
+        v => (v || '').length <= this.max || `文字数の制限は${this.max}文字です`
+        rules.push(rule)
+      }
+      return rules
+    }
+  },
+
   methods: {
     selectPage(selectedPage) {
       this.page = selectedPage;
@@ -66,6 +91,7 @@ export default {
       this.closeThread();
       window.scrollTo(0,0)
     },
+
     showThread(ts) {
       this.$axios.get(
         `https://slack.com/api/conversations.replies?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}&ts=${ts}`
@@ -74,9 +100,28 @@ export default {
         this.threadShow = true;
       })
     },
+
     closeThread() {
       this.threadMessages = [];
       this.threadShow = false;
+    },
+
+    submit() {
+      if(!this.$refs.form.validate()){
+        alert("文字数オーバーです。");
+        return;
+      }
+      this.$axios.post(
+        `https://slack.com/api/chat.postMessage?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}&text=${this.sendingMessage}`)
+        .then(response => {
+          if(response.data.ok == false) {
+            alert(response.data.error)
+          }else {
+            alert("投稿できました。");
+            this.sendingMessage = ""
+          }
+        })
+        .catch(error => alert(error));
     }
   }
 }
