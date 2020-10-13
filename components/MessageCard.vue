@@ -21,7 +21,7 @@ export default {
   computed: {
     messageWithHTMLTag() {
       const httpMatchRegex = /<http.+?\>/g;
-      const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp).*$/i;
+      const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp|svg).*$/i;
       let words = this.message.text.split(/(<.+?>)/)
       let new_words = []
       let images = []
