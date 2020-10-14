@@ -73,6 +73,12 @@ export default {
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
     )
 
+    const aaa = await $axios.get(
+      `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+    )
+
+    console.log(aaa.data.members.length);
+
     temp = {
       messages: res_1.data.messages,
       page: 1,
@@ -83,15 +89,11 @@ export default {
       threadMessages: [],
     }
 
-    // return temp;
-
-    // return temp;
-    // console.log(temp);
-    temp.displayMessages = await replaceMessages(temp.displayMessages);
-    console.log(replaceMessages(temp.displayMessages));
-    console.log('----------------------------------------------');
-    // console.log(temp.displayMessages);
-    console.log('----------------------------------------------');
+    let a = await replaceMessages(temp.displayMessages);
+    temp.displayMessages = a;
+    // console.log(replaceMessages(temp.displayMessages));
+    // console.log('----------------------------------------------');
+    // console.log('----------------------------------------------');
 
     return temp;
 
