@@ -4,6 +4,7 @@
       <message-card
         v-for="message in displayMessages"
         v-bind:message="message"
+        v-bind:users="users"
         v-bind:isThread=false
         v-bind:key="message.ts"
         @showThread="showThread($event)"
@@ -37,6 +38,7 @@
         v-bind:message="message"
         v-bind:isThread=true
         v-bind:key="message.ts"
+        v-bind:users="users"
       />
     </v-flex>
   </v-layout>
@@ -51,59 +53,6 @@ export default {
   },
 
   async asyncData ({ $axios }) {
-
-    // return await $axios.get(
-    //   `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
-    // ).then((res) => {
-    //   const pageSize = 10;
-    //   return {
-    //     messages: res.data.messages,
-    //     page: 1,
-    //     pageSize: pageSize,
-    //     displayMessages: res.data.messages.slice(0, pageSize),
-    //     pageLength: Math.ceil(res.data.messages.length / pageSize),
-    //     threadShow: false,
-    //     threadMessages: [],
-    //   }
-    // })
-
-    const pageSize = 10;
-    let temp;
-    const res_1 = await $axios.get(
-      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
-    )
-
-    const aaa = await $axios.get(
-      `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
-    )
-
-    console.log(aaa.data.members.length);
-
-    temp = {
-      messages: res_1.data.messages,
-      page: 1,
-      pageSize: pageSize,
-      displayMessages: res_1.data.messages.slice(0, pageSize),
-      pageLength: Math.ceil(res_1.data.messages.length / pageSize),
-      threadShow: false,
-      threadMessages: [],
-    }
-
-    let a = await replaceMessages(temp.displayMessages);
-    temp.displayMessages = a;
-    // console.log(replaceMessages(temp.displayMessages));
-    // console.log('----------------------------------------------');
-    // console.log('----------------------------------------------');
-
-    return temp;
-
-    // console.log(temp.displayMessages)
-    // console.log(temp);
-
-    cache = { Uhogehoge: { name: 'swd' } }
-
-    return temp;
-
     async function replaceMessages(displayMessages) {
       let abc = displayMessages;
       const userMentionRegex = /<@[A-Z0-9]+?>/gm;
@@ -114,7 +63,6 @@ export default {
         if(userIds){
           userIds.forEach(async (userId) => {
             let userName = await getUserName(userId.substring(2, userId.length-1))
-            console.log(userName);
             message.text = "<" + sendingUser + ">" + message.text.replace(userId, '@'+userName)
             abc[i].text = message.text;
           });
@@ -131,14 +79,51 @@ export default {
             alert(response.data.error)
             return;
           }
-          // console.log( response.data.user.profile.display_name);
-          return response.data.user.profile.display_name;
+          return response.data.user.profile.display_name_normalized;
         })
         .catch(error => alert(error));
+    }
+
+    const messagesRes = await $axios.get(
+      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+    );
+
+    let usersList;
+    let usersRes = await $axios.get(
+      `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}`
+    );
+    usersList = usersRes.data.members;
+    // console.log(Object.keys(usersList));
+
+    while(true) {
+      let cursor = usersRes.data.response_metadata.next_cursor
+      // console.log(cursor);
+      if(cursor == "") {
+        break;
+      }
+      usersRes = await $axios.get(
+        `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}&cursor=${cursor}`
+      );
+      usersList = usersList.concat(usersRes.data.members);
+    }
+
+    // console.log(usersRes);
+
+    const pageSize = 10;
+    return {
+      messages: messagesRes.data.messages,
+      page: 1,
+      pageSize: pageSize,
+      displayMessages: messagesRes.data.messages.slice(0, pageSize),
+      pageLength: Math.ceil(messagesRes.data.messages.length / pageSize),
+      threadShow: false,
+      threadMessages: [],
+      users: usersList,
     }
   },
 
   data: () => ({
+    users: [],
     max: 4000,
     sendingMessage: "",
     displayMessages: [],

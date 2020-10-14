@@ -2,6 +2,7 @@
   <v-card class="messageCard">
     <v-list-item three-line>
       <v-list-item-content>
+        <div>From：{{ senderName }}</div>
         <div v-html="messageWithHTMLTag"/>
       </v-list-item-content>
     </v-list-item>
@@ -14,24 +15,38 @@
 
 <script>
 export default {
-  props: ["message", "isThread"],
+  props: ["message", "isThread", "users"],
 
   computed: {
+    senderName() {
+      const usersDic = this.usersDisctionary(this.users);
+      return usersDic[this.message.user];
+    },
+
     messageWithHTMLTag() {
+      const usersDic = this.usersDisctionary(this.users)
+
       const httpMatchRegex = /<http.+?\>/g;
       const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i;
-      let words = this.message.text.split(/(<.+?>)/)
+      const mentionUserRegex = /<@[A-Z0-9]+?>|<!subteam.+\|@.+>/gm;
+      let words = this.message.text.split(/(<.+?>)/g)
       let new_words = []
       let images = []
 
       words.forEach((word) => {
         if((httpMatchRegex).test(word)) {
           const [actualLink, displayLink] = word.match(/(?<=\<).*?(?=\>)/)[0].split('|')
-          if(imgRegex.test(actualLink)){
+          if(imgRegex.test(actualLink)) {
             images.push(`<img src=${actualLink} width="200"> `);
             new_words.push('');
           } else { // link
             new_words.push(this.replaceLinkWithATag(actualLink, displayLink));
+          }
+        } else if(mentionUserRegex.test(word)) {
+          if(/<!subteam.+\|@.+>/.test(word)){
+            new_words.push(this.heightName(word.match(/@.+[^\>]/)[0]));
+          } else {
+            new_words.push(this.heightName(usersDic[word.substring(2, word.length-1)]));
           }
         } else {
           new_words.push(word.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
@@ -51,6 +66,14 @@ export default {
   },
 
   methods: {
+    usersDisctionary(members) {
+      let usersDic = {}
+      members.forEach((user) => {
+        usersDic[user.id] = user.profile.display_name;
+      });
+      return usersDic;
+    },
+
     showThread() {
       this.$emit('showThread', this.message.ts);
     },
@@ -58,6 +81,9 @@ export default {
     replaceLinkWithATag(actualLink, displayLink){
       return `<a href="${actualLink}" target="_blank">${displayLink || actualLink}</a>`
     },
+    heightName(name){
+      return `<mark style="background-color: green;"><b>${name}</b></mark>`
+    }
   },
 }
 </script>
