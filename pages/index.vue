@@ -51,80 +51,89 @@ export default {
   },
 
   async asyncData ({ $axios }) {
+
+    // return await $axios.get(
+    //   `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+    // ).then((res) => {
+    //   const pageSize = 10;
+    //   return {
+    //     messages: res.data.messages,
+    //     page: 1,
+    //     pageSize: pageSize,
+    //     displayMessages: res.data.messages.slice(0, pageSize),
+    //     pageLength: Math.ceil(res.data.messages.length / pageSize),
+    //     threadShow: false,
+    //     threadMessages: [],
+    //   }
+    // })
+
+    const pageSize = 10;
+    let temp;
+    const res_1 = await $axios.get(
+      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+    )
+
+    temp = {
+      messages: res_1.data.messages,
+      page: 1,
+      pageSize: pageSize,
+      displayMessages: res_1.data.messages.slice(0, pageSize),
+      pageLength: Math.ceil(res_1.data.messages.length / pageSize),
+      threadShow: false,
+      threadMessages: [],
+    }
+
+    // return temp;
+
+    // return temp;
+    // console.log(temp);
+    temp.displayMessages = await replaceMessages(temp.displayMessages);
+    console.log(replaceMessages(temp.displayMessages));
+    console.log('----------------------------------------------');
+    // console.log(temp.displayMessages);
+    console.log('----------------------------------------------');
+
+    return temp;
+
+    // console.log(temp.displayMessages)
+    // console.log(temp);
+
+    cache = { Uhogehoge: { name: 'swd' } }
+
+    return temp;
+
     async function replaceMessages(displayMessages) {
       let abc = displayMessages;
-      // console.log(abc);
       const userMentionRegex = /<@[A-Z0-9]+?>/gm;
-      displayMessages.forEach(async(message, i ) => {
+      displayMessages.forEach(async (message, i) => {
         let sendingUser = await getUserName(message.user);
 
         let userIds = message.text.match(userMentionRegex);
         if(userIds){
-          userIds.forEach( async (userId) => {
+          userIds.forEach(async (userId) => {
             let userName = await getUserName(userId.substring(2, userId.length-1))
-            // console.log(userName);
+            console.log(userName);
             message.text = "<" + sendingUser + ">" + message.text.replace(userId, '@'+userName)
             abc[i].text = message.text;
-            console.log(abc[i].text);
           });
         }
       });
-      console.log(abc[0].text);
-      // await sleep(5000);
+      return abc;
     }
 
-    function getUserName(userId){
-      return $axios.get(
+    async function getUserName(userId){
+      return await $axios.get(
         `https://slack.com/api/users.info?token=${process.env.SLACK_API_TOKEN}&user=${userId}`)
         .then(response => {
-          // console.log(response);
           if(response.data.ok == false) {
             alert(response.data.error)
             return;
           }
-          // console.log(response.data.user.profile.display_name);
+          // console.log( response.data.user.profile.display_name);
           return response.data.user.profile.display_name;
         })
         .catch(error => alert(error));
     }
-
-    const res = await $axios.get(
-      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
-    )
-    const pageSize = 10;
-    let temp = {
-      messages: res.data.messages,
-      page: 1,
-      pageSize: pageSize,
-      displayMessages: res.data.messages.slice(0, pageSize),
-      pageLength: Math.ceil(res.data.messages.length / pageSize),
-      threadShow: false,
-      threadMessages: [],
-    }
-    // return temp;
-
-    temp.displayMessages = await replaceMessages(temp.displayMessages);
-    // console.log(temp.displayMessages);
-
-    return temp;
-
-    return await $axios.get(
-      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
-    ).then((res) => {
-
-      return {
-        messages: res.data.messages,
-        page: 1,
-        pageSize: pageSize,
-        displayMessages: res.data.messages.slice(0, pageSize),
-        pageLength: Math.ceil(res.data.messages.length / pageSize),
-        threadShow: false,
-        threadMessages: [],
-      }
-    }).then((info) => {
-      replaceMessages(info.displayMessages);
-      return info;
-    })
   },
 
   data: () => ({
