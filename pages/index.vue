@@ -2,7 +2,7 @@
   <v-layout>
     <v-flex>
       <message-card
-        v-for="message in this.replaceMessages(displayMessages)"
+        v-for="message in displayMessages"
         v-bind:message="message"
         v-bind:isThread=false
         v-bind:key="message.ts"
@@ -51,10 +51,67 @@ export default {
   },
 
   async asyncData ({ $axios }) {
-    return $axios.get(
+    async function replaceMessages(displayMessages) {
+      let abc = displayMessages;
+      // console.log(abc);
+      const userMentionRegex = /<@[A-Z0-9]+?>/gm;
+      displayMessages.forEach(async(message, i ) => {
+        let sendingUser = await getUserName(message.user);
+
+        let userIds = message.text.match(userMentionRegex);
+        if(userIds){
+          userIds.forEach( async (userId) => {
+            let userName = await getUserName(userId.substring(2, userId.length-1))
+            // console.log(userName);
+            message.text = "<" + sendingUser + ">" + message.text.replace(userId, '@'+userName)
+            abc[i].text = message.text;
+            console.log(abc[i].text);
+          });
+        }
+      });
+      console.log(abc[0].text);
+      // await sleep(5000);
+    }
+
+    function getUserName(userId){
+      return $axios.get(
+        `https://slack.com/api/users.info?token=${process.env.SLACK_API_TOKEN}&user=${userId}`)
+        .then(response => {
+          // console.log(response);
+          if(response.data.ok == false) {
+            alert(response.data.error)
+            return;
+          }
+          // console.log(response.data.user.profile.display_name);
+          return response.data.user.profile.display_name;
+        })
+        .catch(error => alert(error));
+    }
+
+    const res = await $axios.get(
+      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+    )
+    const pageSize = 10;
+    let temp = {
+      messages: res.data.messages,
+      page: 1,
+      pageSize: pageSize,
+      displayMessages: res.data.messages.slice(0, pageSize),
+      pageLength: Math.ceil(res.data.messages.length / pageSize),
+      threadShow: false,
+      threadMessages: [],
+    }
+    // return temp;
+
+    temp.displayMessages = await replaceMessages(temp.displayMessages);
+    // console.log(temp.displayMessages);
+
+    return temp;
+
+    return await $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
     ).then((res) => {
-      const pageSize = 10;
+
       return {
         messages: res.data.messages,
         page: 1,
@@ -64,12 +121,16 @@ export default {
         threadShow: false,
         threadMessages: [],
       }
+    }).then((info) => {
+      replaceMessages(info.displayMessages);
+      return info;
     })
   },
 
   data: () => ({
     max: 4000,
     sendingMessage: "",
+    displayMessages: [],
   }),
 
   computed: {
@@ -85,37 +146,6 @@ export default {
   },
 
   methods: {
-    replaceMessages(displayMessages) {
-      // return displayMessages;
-      const userMentionRegex = /<@[A-Z0-9]+?>/gm;
-      displayMessages.forEach((message) => {
-        let sendingUser = this.getUserName(message.user);
-
-        let userIds = message.text.match(userMentionRegex);
-        if(userIds){
-          userIds.forEach((userId) => {
-            let userName = this.getUserName(userId.substring(2, userId.length-1))
-            message.text = "<" + sendingUser + ">" + message.text.replace(userId, '@'+userName)
-          });
-        }
-      });
-      return displayMessages
-    },
-
-    getUserName(userId){
-      return　this.$axios.get(
-        `https://slack.com/api/users.info?token=${process.env.SLACK_API_TOKEN}&user=${userId}`)
-        .then(response => {
-          // console.log(response);
-          if(response.data.ok == false) {
-            alert(response.data.error)
-            return;
-          }
-          return response.data.user.profile.display_name;
-        })
-        .catch(error => alert(error));
-    },
-
     selectPage(selectedPage) {
       this.page = selectedPage;
       this.displayMessages = this.messages.slice((this.page - 1) * 10, this.pageSize * this.page)
