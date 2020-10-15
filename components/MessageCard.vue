@@ -3,9 +3,11 @@
     <v-list-item three-line>
       <v-list-item-content>
         <div v-html="messageWithHTMLTag"/>
+        <div v-if="message.files" v-for="image in message.files">
+          <img :class="imageBox" :src="image.url_private" :width="200">
+        </div>
       </v-list-item-content>
     </v-list-item>
-
     <v-card-actions v-if="!isThread">
       <v-btn text v-if="message.reply_count" v-on:click="showThread">{{message.reply_count}}件の返信</v-btn>
     </v-card-actions>
@@ -19,7 +21,7 @@ export default {
   computed: {
     messageWithHTMLTag() {
       const httpMatchRegex = /<http.+?\>/g;
-      const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i;
+      const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp|svg)$/i;
       let words = this.message.text.split(/(<.+?>)/)
       let new_words = []
       let images = []
@@ -27,7 +29,8 @@ export default {
       words.forEach((word) => {
         if((httpMatchRegex).test(word)) {
           const [actualLink, displayLink] = word.match(/(?<=\<).*?(?=\>)/)[0].split('|')
-          if(imgRegex.test(actualLink)){
+          const url = new URL(actualLink);
+          if (imgRegex.test(url.pathname)) {
             images.push(`<img src=${actualLink} width="200"> `);
             new_words.push('');
           } else { // link
