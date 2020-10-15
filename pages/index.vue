@@ -53,61 +53,32 @@ export default {
   },
 
   async asyncData ({ $axios }) {
-    async function replaceMessages(displayMessages) {
-      let abc = displayMessages;
-      const userMentionRegex = /<@[A-Z0-9]+?>/gm;
-      displayMessages.forEach(async (message, i) => {
-        let sendingUser = await getUserName(message.user);
+    async function usersList(){
+      let usersList;
+      let usersRes = await $axios.get(
+        `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}`
+      );
+      usersList = usersRes.data.members;
 
-        let userIds = message.text.match(userMentionRegex);
-        if(userIds){
-          userIds.forEach(async (userId) => {
-            let userName = await getUserName(userId.substring(2, userId.length-1))
-            message.text = "<" + sendingUser + ">" + message.text.replace(userId, '@'+userName)
-            abc[i].text = message.text;
-          });
+      while(true) {
+        let cursor = usersRes.data.response_metadata.next_cursor
+        if(cursor == "") {
+          break;
         }
-      });
-      return abc;
-    }
+        usersRes = await $axios.get(
+          `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}&cursor=${cursor}`
+        );
+        usersList = usersList.concat(usersRes.data.members);
+      }
 
-    async function getUserName(userId){
-      return await $axios.get(
-        `https://slack.com/api/users.info?token=${process.env.SLACK_API_TOKEN}&user=${userId}`)
-        .then(response => {
-          if(response.data.ok == false) {
-            alert(response.data.error)
-            return;
-          }
-          return response.data.user.profile.display_name_normalized;
-        })
-        .catch(error => alert(error));
+      return await usersList;
     }
 
     const messagesRes = await $axios.get(
       `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
     );
 
-    let usersList;
-    let usersRes = await $axios.get(
-      `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}`
-    );
-    usersList = usersRes.data.members;
-    // console.log(Object.keys(usersList));
-
-    while(true) {
-      let cursor = usersRes.data.response_metadata.next_cursor
-      // console.log(cursor);
-      if(cursor == "") {
-        break;
-      }
-      usersRes = await $axios.get(
-        `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}&cursor=${cursor}`
-      );
-      usersList = usersList.concat(usersRes.data.members);
-    }
-
-    // console.log(usersRes);
+    let users = await usersList();
 
     const pageSize = 10;
     return {
@@ -118,7 +89,7 @@ export default {
       pageLength: Math.ceil(messagesRes.data.messages.length / pageSize),
       threadShow: false,
       threadMessages: [],
-      users: usersList,
+      users: users,
     }
   },
 

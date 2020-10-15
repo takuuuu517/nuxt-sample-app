@@ -34,7 +34,7 @@ export default {
       let images = []
 
       words.forEach((word) => {
-        if((httpMatchRegex).test(word)) {
+        if((httpMatchRegex).test(word)) { // link or img
           const [actualLink, displayLink] = word.match(/(?<=\<).*?(?=\>)/)[0].split('|')
           if(imgRegex.test(actualLink)) {
             images.push(`<img src=${actualLink} width="200"> `);
@@ -42,26 +42,14 @@ export default {
           } else { // link
             new_words.push(this.replaceLinkWithATag(actualLink, displayLink));
           }
-        } else if(mentionUserRegex.test(word)) {
-          if(/<!subteam.+\|@.+>/.test(word)){
-            new_words.push(this.heightName(word.match(/@.+[^\>]/)[0]));
-          } else {
-            new_words.push(this.heightName(usersDic[word.substring(2, word.length-1)]));
-          }
+        } else if(mentionUserRegex.test(word)) { // user name
+          new_words.push(this.heightName(this.displayName(word, usersDic)));
         } else {
-          new_words.push(word.replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+          new_words.push(this.escapedWord(word));
         }
       });
 
-      let new_message = new_words.join('');
-      if(images.length > 0) {
-        new_message += "<br>"
-        images.forEach((imgTag) => {
-          new_message += imgTag;
-        });
-        return new_message;
-      }
-      return new_words.join('')
+      return this.updatedMessage(new_words, images);
     }
   },
 
@@ -81,8 +69,34 @@ export default {
     replaceLinkWithATag(actualLink, displayLink){
       return `<a href="${actualLink}" target="_blank">${displayLink || actualLink}</a>`
     },
+
     heightName(name){
       return `<mark style="background-color: green;"><b>${name}</b></mark>`
+    },
+
+    escapedWord(word) {
+      return word.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    },
+
+    displayName(word, usersDic) {
+      if(/<!subteam.+\|@.+>/.test(word)){ // subteam mention (ex. @rx-dev)
+        // <!subteam^S0117UYGSDC|@rx-dev> -> @rx-dev
+        return word.match((/@.+[^\>]/)[0]);
+      }
+      // normal mention (ex. @t_sakikawa)
+      return  usersDic[word.substring(2, word.length-1)];
+    },
+
+    updatedMessage(new_words, images){
+      let new_message = new_words.join('');
+      if(images.length > 0) {
+        new_message += "<br>"
+        images.forEach((imgTag) => {
+          new_message += imgTag;
+        });
+        return new_message;
+      }
+      return new_message;
     }
   },
 }
