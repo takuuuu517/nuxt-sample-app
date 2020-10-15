@@ -4,6 +4,7 @@
       <message-card
         v-for="message in displayMessages"
         v-bind:message="message"
+        v-bind:users="users"
         v-bind:isThread=false
         v-bind:key="message.ts"
         @showThread="showThread($event)"
@@ -37,6 +38,7 @@
         v-bind:message="message"
         v-bind:isThread=true
         v-bind:key="message.ts"
+        v-bind:users="users"
       />
     </v-flex>
   </v-layout>
@@ -51,25 +53,51 @@ export default {
   },
 
   async asyncData ({ $axios }) {
-    return $axios.get(
-      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
-    ).then((res) => {
-      const pageSize = 10;
-      return {
-        messages: res.data.messages,
-        page: 1,
-        pageSize: pageSize,
-        displayMessages: res.data.messages.slice(0, pageSize),
-        pageLength: Math.ceil(res.data.messages.length / pageSize),
-        threadShow: false,
-        threadMessages: [],
+    async function usersList(){
+      let usersList;
+      let usersRes = await $axios.get(
+        `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}`
+      );
+      usersList = usersRes.data.members;
+
+      while(true) {
+        let cursor = usersRes.data.response_metadata.next_cursor
+        if(cursor == "") {
+          break;
+        }
+        usersRes = await $axios.get(
+          `https://slack.com/api/users.list?token=${process.env.SLACK_API_TOKEN}&cursor=${cursor}`
+        );
+        usersList = usersList.concat(usersRes.data.members);
       }
-    })
+
+      return await usersList;
+    }
+
+    const messagesRes = await $axios.get(
+      `https://slack.com/api/conversations.history?token=${process.env.SLACK_API_TOKEN}&channel=${process.env.CHANNEL_ID}`
+    );
+
+    let users = await usersList();
+
+    const pageSize = 10;
+    return {
+      messages: messagesRes.data.messages,
+      page: 1,
+      pageSize: pageSize,
+      displayMessages: messagesRes.data.messages.slice(0, pageSize),
+      pageLength: Math.ceil(messagesRes.data.messages.length / pageSize),
+      threadShow: false,
+      threadMessages: [],
+      users: users,
+    }
   },
 
   data: () => ({
+    users: [],
     max: 4000,
     sendingMessage: "",
+    displayMessages: [],
   }),
 
   computed: {
