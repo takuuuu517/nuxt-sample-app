@@ -21,7 +21,7 @@ export default {
   computed: {
     messageWithHTMLTag() {
       const httpMatchRegex = /<http.+?\>/g;
-      const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp|svg).*$/i;
+      const imgRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp|svg)$/i;
       let words = this.message.text.split(/(<.+?>)/)
       let new_words = []
       let images = []
@@ -29,7 +29,8 @@ export default {
       words.forEach((word) => {
         if((httpMatchRegex).test(word)) {
           const [actualLink, displayLink] = word.match(/(?<=\<).*?(?=\>)/)[0].split('|')
-          if(imgRegex.test(actualLink)){
+          const url = new URL(actualLink);
+          if (imgRegex.test(url.pathname)) {
             images.push(`<img src=${actualLink} width="200"> `);
             new_words.push('');
           } else { // link
